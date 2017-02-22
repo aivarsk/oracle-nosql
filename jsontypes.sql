@@ -5,6 +5,8 @@ DESC ora_json
 
 INSERT INTO ora_json VALUES ('{"number_value": 3.14, "string_value": "string", "boolean_value": false, "array_value": [1, 2, 3], "object_value": {"key": "value"}}');
 
+-- Default SQL/JSON types
+
 CREATE TABLE ora_json_types
 AS
 SELECT j.data.number_value,
@@ -18,6 +20,8 @@ DESC ora_json_types
 SELECT * FROM ora_json_types;
 
 DROP TABLE ora_json_types;
+
+-- Default function JSON_VALUE types
 
 CREATE TABLE ora_json_types
 AS
@@ -33,13 +37,55 @@ SELECT * FROM ora_json_types;
 
 DROP TABLE ora_json_types;
 
+-- JSON table w/o types (default types)
+
+CREATE TABLE ora_json_types
+AS
+SELECT jt.*
+  FROM ora_json j,
+       JSON_TABLE(j.data, '$' COLUMNS
+                  number_value PATH '$.number_value',
+                  string_value PATH '$.string_value',
+                  array_value PATH  '$.array_value',
+                  object_value PATH  '$.object_value',
+                  ) jt;
+DESC ora_json_types
+SELECT * FROM ora_json_types;
+
+DROP TABLE ora_json_types;
+
+-- JSON table with types
+-- Check complex nested types
+
 CREATE TABLE ora_json_types
 AS
 SELECT jt.*
   FROM ora_json j,
        JSON_TABLE(j.data, '$' COLUMNS
                   number_value NUMBER(10,2) PATH '$.number_value',
-                  string_value VARCHAR2(10) PATH '$.string_value'
+                  string_value VARCHAR2(10) PATH '$.string_value',
+                  array_value_string VARCHAR2(20) PATH  '$.array_value',
+                  array_value_json VARCHAR2(20) FORMAT JSON PATH  '$.array_value',
+                  object_value_string VARCHAR2(20) PATH  '$.object_value',
+                  object_value_json VARCHAR2(20) FORMAT JSON PATH  '$.object_value'
+                  ) jt;
+DESC ora_json_types
+SELECT * FROM ora_json_types;
+
+DROP TABLE ora_json_types;
+
+-- Unpack nested array
+
+CREATE TABLE ora_json_types
+AS
+SELECT jt.*
+  FROM ora_json j,
+       JSON_TABLE(j.data, '$' COLUMNS
+                  number_value NUMBER(10,2) PATH '$.number_value',
+                  string_value VARCHAR2(10) PATH '$.string_value',
+                  NESTED PATH '$.array_value[*]' COLUMNS (
+                          array_value NUMBER(10) PATH '$'
+                      )
                   ) jt;
 DESC ora_json_types
 SELECT * FROM ora_json_types;
